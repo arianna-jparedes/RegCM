@@ -28,12 +28,16 @@ module mod_cu_kf
   use mod_regcm_types
   use mod_mpmessage
   use mod_cu_common
+  use mod_mppparam
   use mod_runparams, only : dx, dxsq, ipptls, ibltyp, dt
   use mod_runparams, only : iqv, iqr, iqi, iqs, iqc
   use mod_runparams, only : kf_entrate, kf_convrate, kf_min_pef, kf_max_pef
   use mod_runparams, only : kf_dpp, kf_min_dtcape, kf_max_dtcape
   use mod_runparams, only : kf_tkemax, kf_wthreshold
   use mod_runparams, only : k2_const, kfac_shal, kfac_deep
+  use mod_runparams, only : istochastic
+  use mod_runparams, only : kf_entrate_min, kf_entrate_max, kf_convrate_min
+  use mod_runparams, only : kf_convrate_max, kf_dpp_min, kf_dpp_max
   use mod_runparams, only : ichem
   use mod_service
 
