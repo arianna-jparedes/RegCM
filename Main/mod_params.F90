@@ -158,7 +158,7 @@ module mod_params
 
     namelist /kfparam/ kf_min_pef, kf_max_pef, kf_entrate, kf_dpp, &
       kf_min_dtcape, kf_max_dtcape, kf_tkemax, kf_convrate,        &
-      kf_wthreshold
+      kf_wthreshold, istochastic
 
     namelist /kfstochastic/ kf_entrate_min, kf_entrate_max, kf_convrate_min, &
       kf_convrate_max, kf_dpp_min, kf_dpp_max 
