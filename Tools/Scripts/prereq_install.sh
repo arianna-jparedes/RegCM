@@ -7,27 +7,27 @@
 # CHEK HERE BELOW THE COMPILERS
 #
 # Working CC Compiler
-#CC="gcc -fPIC"
+CC="gcc -fPIC"
 #CC="icc -fPIC"
 #CC="pgcc -fpic -DpgiFortran"
 #CC="xlc_r -qpic"
 # Working C++ Compiler
-#CXX="g++ -fPIC"
+CXX="g++ -fPIC"
 #CXX="icpc -fPIC"
 #CXX="pgCC -fpic"
 #CXX="xlc++_r -qpic"
 # Working Fortran Compiler
-#FC="gfortran -fPIC"
+FC="gfortran -fPIC"
 #FC="ifort -fPIC"
 #FC="pgf90 -fpic"
 #FC="xlf2003_r -qpic"
 # Destination directory
-#DEST=$PWD
+DEST=/home/arya/Projects/Earth_System_Physics/final_project/lib/
 
 netcdf_c_ver=4.9.2
 netcdf_f_ver=4.6.1
 hdf5_ver=1.14.2
-zlib_ver=1.3.1
+zlib_ver=1.3.2
 ompi_ver=4.1.6
 ompi_major=`echo $ompi_ver | cut -d "." -f 1-2`
 hdf5_major=`echo $hdf5_ver | cut -d "." -f 1-2`

@@ -360,7 +360,6 @@ module mod_runparams
   real(rkx), public :: entshalp  ! shallow entrainment factor for entrorg
 
   ! Kain-Fritsch parameter
-
   real(rkx), public :: kf_entrate
   real(rkx), public :: kf_convrate
   real(rkx), public :: kf_min_pef
@@ -370,6 +369,14 @@ module mod_runparams
   real(rkx), public :: kf_max_dtcape
   real(rkx), public :: kf_tkemax
   real(rkx), public :: kf_wthreshold
+
+  ! KF Stochastic perturbation bounds
+  real(rkx), public :: kf_entrate_min
+  real(rkx), public :: kf_entrate_max
+  real(rkx), public :: kf_convrate_min
+  real(rkx), public :: kf_convrate_max
+  real(rkx), public :: kf_dpp_min
+  real(rkx), public :: kf_dpp_max
 
   ! Tweak Global data
 
