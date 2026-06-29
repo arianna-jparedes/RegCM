@@ -188,11 +188,22 @@ module mod_cu_kf
     type(mod_2_cum), intent(in) :: m2c
     integer(ik4) :: i, j,  k, kk, np
     real(rkx) :: es
+    real(rkx), dimension(3) :: rfacs
 #ifdef DEBUG
     character(len=dbgslen) :: subroutine_name = 'kfdrv'
     integer(ik4), save :: idindx = 0
     call time_begin(subroutine_name,idindx)
 #endif
+
+    if ( istochastic == 1) then
+      if ( myid == 0) then
+        call random_number(rfacs)
+      end if
+      call bcast(rfacs)
+      kf_entrate = kf_entrate_min + rfacs(1) * (kf_entrate_max - kf_entrate_min)
+      kf_convrate = kf_convrate_min + rfacs(2) * (kf_convrate_max - kf_convrate_min)
+      kf_dpp = kf_dpp_min + rfacs(3) * (kf_dpp_max - kf_dpp_min)
+    end if
 
     if ( nipoi == 0 ) then
 #ifdef DEBUG
@@ -289,7 +300,6 @@ module mod_cu_kf
     if ( kf_trigger == 2 ) then
       call fatal(__FILE__,__LINE__,'Not implemented kf_trigger == 2')
     end if
-
     if ( ipptls > 1 ) then
       call kfpara(1,kz,1,nipoi,.true.,.true.,.false.)
     else
