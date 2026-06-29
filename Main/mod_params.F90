@@ -986,7 +986,7 @@ module mod_params
           write(stdout,*) 'Resetting kf_tkemax to 3 m2 s-2'
           kf_tkemax = 3.0_rkx
         end if
-        if (isotochastic == 1) then
+        if (istochastic == 1) then
           rewind(ipunit)
           read (ipunit, nml=kfstochastic, iostat=iretval, err=113)
           if (iretval /= 0) then
