@@ -369,7 +369,6 @@ module mod_runparams
   real(rkx), public :: kf_max_dtcape
   real(rkx), public :: kf_tkemax
   real(rkx), public :: kf_wthreshold
-  integer(ik4), public :: istochastic = 0
 
   ! KF Stochastic perturbation bounds
   real(rkx), public :: kf_entrate_min
