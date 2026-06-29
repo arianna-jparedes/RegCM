@@ -1884,6 +1884,14 @@ module mod_params
       call bcast(kf_min_dtcape)
       call bcast(kf_max_dtcape)
       call bcast(kf_tkemax)
+      if ( istochastic == 1) then
+        call bcast(kf_entrate_min)
+        call bcast(kf_entrate_max)
+        call bcast(kf_convrate_min)
+        call bcast(kf_convrate_max)
+        call bcast(kf_dpp_min)
+        call bcast(kf_dpp_max)
+      end if
     end if
 
     if ( ibltyp == 1 ) then
