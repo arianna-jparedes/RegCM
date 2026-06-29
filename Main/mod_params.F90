@@ -160,7 +160,7 @@ module mod_params
       kf_min_dtcape, kf_max_dtcape, kf_tkemax, kf_convrate,        &
       kf_wthreshold
 
-    namelist /kfstochastic/ kf_entrate_min, kf_entrate_max, kf_convrate_min &
+    namelist /kfstochastic/ kf_entrate_min, kf_entrate_max, kf_convrate_min, &
       kf_convrate_max, kf_dpp_min, kf_dpp_max 
 
     namelist /chemparam/ chemsimtype, ichremlsc, ichremcvc, ichdrdepo, &
