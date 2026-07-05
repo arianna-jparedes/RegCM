@@ -111,6 +111,7 @@ module mod_savefile
   real(rkx), public, pointer, contiguous, dimension(:,:) :: tgbb_io => null( )
   real(rkx), public, pointer, contiguous, dimension(:,:) :: uvdrag_io => null( )
   real(rkx), public, pointer, contiguous, dimension(:,:) :: q2m_io => null( )
+  real(rkx), public, pointer, contiguous, dimension(:,:) :: t2m_io => null( )
   real(rkx), public, pointer, contiguous, dimension(:,:) :: u10m_io => null( )
   real(rkx), public, pointer, contiguous, dimension(:,:) :: v10m_io => null( )
   real(rkx), public, pointer, contiguous, dimension(:,:) :: w10m_io => null( )
@@ -270,6 +271,7 @@ module mod_savefile
       call getmem(tgbb_io,jci1,jci2,ici1,ici2,'tgbb_io')
       call getmem(uvdrag_io,jci1,jci2,ici1,ici2,'uvdrag_io')
       call getmem(q2m_io,jci1,jci2,ici1,ici2,'q2m_io')
+      call getmem(t2m_io,jci1,jci2,ici1,ici2,'t2m_io')
       call getmem(u10m_io,jci1,jci2,ici1,ici2,'u10m_io')
       call getmem(v10m_io,jci1,jci2,ici1,ici2,'v10m_io')
       call getmem(w10m_io,jci1,jci2,ici1,ici2,'w10m_io')
@@ -445,6 +447,7 @@ module mod_savefile
         call getmem(tgbb_io,jcross1,jcross2,icross1,icross2,'tgbb_io')
         call getmem(uvdrag_io,jcross1,jcross2,icross1,icross2,'uvdrag_io')
         call getmem(q2m_io,jcross1,jcross2,icross1,icross2,'q2m_io')
+        call getmem(t2m_io,jcross1,jcross2,icross1,icross2,'t2m_io')
         call getmem(u10m_io,jcross1,jcross2,icross1,icross2,'u10m_io')
         call getmem(v10m_io,jcross1,jcross2,icross1,icross2,'v10m_io')
         call getmem(w10m_io,jcross1,jcross2,icross1,icross2,'w10m_io')
@@ -661,6 +664,7 @@ module mod_savefile
     call mygetvar(ncid,'tgbb',tgbb_io)
     call mygetvar(ncid,'uvdrag',uvdrag_io)
     call mygetvar(ncid,'q2m',q2m_io)
+    call mygetvar(ncid,'t2m',t2m_io)
     call mygetvar(ncid,'u10m',u10m_io)
     call mygetvar(ncid,'v10m',v10m_io)
     call mygetvar(ncid,'w10m',w10m_io)
@@ -932,6 +936,7 @@ module mod_savefile
     call savedefvar(ncid,'tgbb',regcm_vartype,wrkdim,1,2,varids,ivcc)
     call savedefvar(ncid,'uvdrag',regcm_vartype,wrkdim,1,2,varids,ivcc)
     call savedefvar(ncid,'q2m',regcm_vartype,wrkdim,1,2,varids,ivcc)
+    call savedefvar(ncid,'t2m',regcm_vartype,wrkdim,1,2,varids,ivcc)
     call savedefvar(ncid,'u10m',regcm_vartype,wrkdim,1,2,varids,ivcc)
     call savedefvar(ncid,'v10m',regcm_vartype,wrkdim,1,2,varids,ivcc)
     call savedefvar(ncid,'w10m',regcm_vartype,wrkdim,1,2,varids,ivcc)
@@ -1169,6 +1174,7 @@ module mod_savefile
     call myputvar(ncid,'tgbb',tgbb_io,varids,ivcc)
     call myputvar(ncid,'uvdrag',uvdrag_io,varids,ivcc)
     call myputvar(ncid,'q2m',q2m_io,varids,ivcc)
+    call myputvar(ncid,'t2m',t2m_io,varids,ivcc)
     call myputvar(ncid,'u10m',u10m_io,varids,ivcc)
     call myputvar(ncid,'v10m',v10m_io,varids,ivcc)
     call myputvar(ncid,'w10m',w10m_io,varids,ivcc)
@@ -1930,7 +1936,7 @@ module mod_savefile
     integer(ik4), intent(out) :: ncid
     integer(ik4) :: imode
     character (len=11) :: ctemp
-    integer(ik4) :: ical
+    integer(ik4) :: ical, imoturn
     type (rcm_time_and_date) :: idatex
     real(rk8) :: rtmp
     imode = nf90_nowrite
@@ -1983,6 +1989,30 @@ module mod_savefile
     ncstatus = nf90_get_att(ncid,nf90_global,'solcon',solcon)
 #endif
     call check_ok(__FILE__,__LINE__,'Cannot get attribute solcon')
+    if ( idynamic == 3 ) then
+#ifdef PNETCDF
+      ncstatus = nf90mpi_get_att(ncid,nf90_global,'mo_turn',imoturn)
+#else
+      ncstatus = nf90_get_att(ncid,nf90_global,'mo_turn',imoturn)
+#endif
+      call check_ok(__FILE__,__LINE__,'Cannot get attribute mo_turn')
+      if ( imoturn == 1 ) then
+        mo_turn = .true.
+      else
+        mo_turn = .false.
+      end if
+#ifdef PNETCDF
+      ncstatus = nf90mpi_get_att(ncid,nf90_global,'mo_advturn',imoturn)
+#else
+      ncstatus = nf90_get_att(ncid,nf90_global,'mo_advturn',imoturn)
+#endif
+      call check_ok(__FILE__,__LINE__,'Cannot get attribute mo_advturn')
+      if ( imoturn == 1 ) then
+        mo_advturn = .true.
+      else
+        mo_advturn = .false.
+      end if
+    end if
     if ( debug_level > 0 ) then
       ! Do no give any error. User may have increased debug just now.
 #ifdef PNETCDF
@@ -2096,6 +2126,7 @@ module mod_savefile
     type (rcm_time_and_date), intent(in) :: idate
     integer(ik4), intent(in) :: ncid
     character (len=11) :: ctemp
+    integer(ik4) :: imoturn
     ctemp = tochar10(idate)
 #ifdef PNETCDF
     ncstatus = nf90mpi_put_att(ncid,nf90_global,'idatex',ctemp)
@@ -2121,6 +2152,24 @@ module mod_savefile
     ncstatus = nf90_put_att(ncid,nf90_global,'solcon',solcon)
 #endif
     call check_ok(__FILE__,__LINE__,'Cannot save solcon')
+    if ( idynamic == 3 ) then
+      imoturn = 0
+      if ( mo_turn ) imoturn = 1
+#ifdef PNETCDF
+      ncstatus = nf90mpi_put_att(ncid,nf90_global,'mo_turn',imoturn)
+#else
+      ncstatus = nf90_put_att(ncid,nf90_global,'mo_turn',imoturn)
+#endif
+      call check_ok(__FILE__,__LINE__,'Cannot save mo_turn')
+      imoturn = 0
+      if ( mo_advturn ) imoturn = 1
+#ifdef PNETCDF
+      ncstatus = nf90mpi_put_att(ncid,nf90_global,'mo_advturn',imoturn)
+#else
+      ncstatus = nf90_put_att(ncid,nf90_global,'mo_advturn',imoturn)
+#endif
+      call check_ok(__FILE__,__LINE__,'Cannot save mo_advturn')
+    end if
     if ( debug_level > 0 ) then
 #ifdef PNETCDF
       ncstatus = nf90mpi_put_att(ncid,nf90_global,'dryini',real(dryini,rk8))

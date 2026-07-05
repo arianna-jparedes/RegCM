@@ -43,7 +43,7 @@ module mod_atm_interface
   type(qendiag), public :: qdiag
   type(surfstate), public :: sfs
   type(slice), public :: atms
-  type(v3dbound), public :: xtb, xqb, xub, xvb, xppb, xwwb, xpaib, xthb
+  type(v3dbound), public :: xtb, xqb, xub, xvb, xppb, xwwb, xpaib
   type(v3dbound), public :: xlb, xib
   type(v2dbound), public :: xpsb, xtsb
   type(bound_area), public :: ba_cr, ba_dt, ba_ut, ba_vt
@@ -585,7 +585,7 @@ module mod_atm_interface
       call getmem(atm%vx,jce1ga,jce2ga,ice1gb,ice2gb,1,kz,'atmstate:vx')
 #endif
       call getmem(atm%tetav,jce1ga,jce2ga,ice1ga,ice2ga,1,kz,'atmstate:tetav')
-      call getmem(atm%t,jce1,jce2,ice1,ice2,1,kz,'atmstate:t')
+      call getmem(atm%t,jce1ga,jce2ga,ice1ga,ice2ga,1,kz,'atmstate:t')
       call getmem(atm%w,jce1,jce2,ice1,ice2,1,kzp1,'atmstate:w')
       call getmem(atm%pai,jce1ga,jce2ga,ice1ga,ice2ga,1,kz,'atmstate:pai')
       call getmem(atm%qx,jce1ga,jce2ga,ice1ga,ice2ga,1,kz,1,nqx,'atmstate:qx')
@@ -928,6 +928,7 @@ module mod_atm_interface
       end if
       call getmem(sfs%br,jci1,jci2,ici1,ici2,'surf:br')
       call getmem(sfs%q2m,jci1,jci2,ici1,ici2,'surf:q2m')
+      call getmem(sfs%t2m,jci1,jci2,ici1,ici2,'surf:t2m')
       call getmem(sfs%ustar,jci1,jci2,ici1,ici2,'surf:ustar')
       call getmem(sfs%w10m,jci1,jci2,ici1,ici2,'surf:w10m')
       call getmem(sfs%u10m,jci1,jci2,ici1,ici2,'surf:u10m')

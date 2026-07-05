@@ -116,13 +116,6 @@ module mod_init
               atm1%qx(j,i,k,iqc) = xlb%b0(j,i,k)
               atm2%qx(j,i,k,iqc) = xlb%b0(j,i,k)
             end do
-          else
-#ifndef RCEMIP
-            do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
-              atm1%qx(j,i,k,iqc) = minqc*xpsb%b0(j,i)
-              atm2%qx(j,i,k,iqc) = minqc*xpsb%b0(j,i)
-            end do
-#endif
           end if
           if ( ipptls > 1 ) then
             if ( is_present_qi( ) ) then
@@ -130,13 +123,6 @@ module mod_init
                 atm1%qx(j,i,k,iqi) = xib%b0(j,i,k)
                 atm2%qx(j,i,k,iqi) = xib%b0(j,i,k)
               end do
-            else
-#ifndef RCEMIP
-              do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
-                atm1%qx(j,i,k,iqi) = minqc*xpsb%b0(j,i)
-                atm2%qx(j,i,k,iqi) = minqc*xpsb%b0(j,i)
-              end do
-#endif
             end if
           end if
         end if
@@ -175,6 +161,7 @@ module mod_init
         end do
         do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
           mo_atm%t(j,i,k) = xtb%b0(j,i,k)
+          mo_atm%pai(j,i,k) = xpaib%b0(j,i,k)
           mo_atm%qx(j,i,k,iqv) = xqb%b0(j,i,k)
         end do
         if ( ipptls > 1 ) then
@@ -182,39 +169,23 @@ module mod_init
             do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
               mo_atm%qx(j,i,k,iqc) = xlb%b0(j,i,k)
             end do
-          else
-#ifndef RCEMIP
-            do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
-              mo_atm%qx(j,i,k,iqc) = minqc
-            end do
-#endif
           end if
           if ( is_present_qi( ) ) then
             do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
               mo_atm%qx(j,i,k,iqi) = xib%b0(j,i,k)
             end do
-          else
-#ifndef RCEMIP
-            do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
-              mo_atm%qx(j,i,k,iqi) = minqc
-            end do
-#endif
           end if
         else if ( ipptls == 1 ) then
           if ( is_present_qc( ) ) then
             do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
               mo_atm%qx(j,i,k,iqc) = xlb%b0(j,i,k)
             end do
-          else
-            do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
-              mo_atm%qx(j,i,k,iqc) = minqc
-            end do
           end if
         end if
         do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
           mo_atm%tvirt(j,i,k) = mo_atm%t(j,i,k) * &
                            (d_one + ep1*mo_atm%qx(j,i,k,iqv))
-          mo_atm%pai(j,i,k) = xpaib%b0(j,i,k)
+          mo_atm%tetav(j,i,k) = mo_atm%tvirt(j,i,k)/mo_atm%pai(j,i,k)
         end do
         ! Compute pressure and density
         do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
@@ -231,7 +202,8 @@ module mod_init
         end do
         do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
           ! Remove excessive supersaturation
-          mo_atm%qx(j,i,k,iqv) = min(mo_atm%qx(j,i,k,iqv),mo_atm%qs(j,i,k))
+          mo_atm%qx(j,i,k,iqv) = min(mo_atm%qx(j,i,k,iqv), &
+                        1.001_rkx*mo_atm%qs(j,i,k))
         end do
         do concurrent ( j = jce1:jce2, i = ice1:ice2 )
           mo_atm%pf(j,i,kzp1) = sfs%psa(j,i)
@@ -547,6 +519,7 @@ module mod_init
         sfs%rah1 = rah_io
         sfs%br = br_io
         sfs%q2m = q2m_io
+        sfs%t2m = t2m_io
         sfs%u10m = u10m_io
         sfs%v10m = v10m_io
         sfs%w10m = w10m_io
@@ -740,6 +713,7 @@ module mod_init
         call grid_distribute(rah_io,sfs%rah1,jci1,jci2,ici1,ici2)
         call grid_distribute(br_io,sfs%br,jci1,jci2,ici1,ici2)
         call grid_distribute(q2m_io,sfs%q2m,jci1,jci2,ici1,ici2)
+        call grid_distribute(t2m_io,sfs%t2m,jci1,jci2,ici1,ici2)
         call grid_distribute(u10m_io,sfs%u10m,jci1,jci2,ici1,ici2)
         call grid_distribute(v10m_io,sfs%v10m,jci1,jci2,ici1,ici2)
         call grid_distribute(w10m_io,sfs%w10m,jci1,jci2,ici1,ici2)
@@ -976,6 +950,7 @@ module mod_init
       do concurrent ( j = jce1:jce2, i = ice1:ice2, k = 1:kz )
         mo_atm%tvirt(j,i,k) = mo_atm%t(j,i,k) * &
                            (d_one + ep1*mo_atm%qx(j,i,k,iqv))
+        mo_atm%tetav(j,i,k) = mo_atm%tvirt(j,i,k)/mo_atm%pai(j,i,k)
       end do
       do concurrent ( j = jce1:jce2, i = ice1:ice2 )
         mo_atm%pf(j,i,kzp1) = sfs%psa(j,i)
