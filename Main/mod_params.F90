@@ -116,7 +116,7 @@ module mod_params
 
     namelist /nonhydroparam/ ifupr, nhbet, nhxkd,       &
       ifrayd, rayndamp, rayalpha0, rayhd, itopnudge,  &
-      mo_divfilter, mo_anu2, mo_nadv, mo_nsound, mo_nzfilt
+      mo_divfilter, mo_divdamp, mo_nadv, mo_nsound, mo_nzfilt
 
     namelist /rrtmparam/ inflgsw, iceflgsw, liqflgsw, inflglw,    &
       iceflglw, liqflglw, icld, irng, imcica, nradfo, rrtm_extend
@@ -350,7 +350,7 @@ module mod_params
     mo_nadv = 3
     mo_nsound = 5
     mo_divfilter = .false.
-    mo_anu2 = 0.6_rkx
+    mo_divdamp = .false.
     mo_nzfilt = kz/3
     !
     ! Rrtm radiation param ;
@@ -1403,7 +1403,7 @@ module mod_params
       end if
       ! Moloch paramters here
       call bcast(mo_divfilter)
-      call bcast(mo_anu2)
+      call bcast(mo_divdamp)
       call bcast(mo_nzfilt)
       call bcast(mo_nadv)
       call bcast(mo_nsound)
@@ -1425,19 +1425,6 @@ module mod_params
     else
       call bcast(nsplit)
       call bcast(lstand)
-    end if
-
-    if ( iboudy == 4 ) then
-      nspgd = max(6,nspgd)
-      nspgx = max(6,nspgx)
-    end if
-    if ( idynamic == 3 ) then
-      if ( nspgd /= nspgx ) then
-        if ( myid == italk ) then
-          write(stderr,*) 'Using nspgx value for nspgd in MOLOCH code'
-        end if
-        nspgd = nspgx
-      end if
     end if
 
     ! Check if really do output
@@ -2183,7 +2170,8 @@ module mod_params
                             mddom%msfx,mddom%msfd,mddom%msfu,mddom%msfv,   &
                             mddom%coriol,mddom%snowam,mddom%smoist,        &
                             mddom%rmoist,mddom%rts,mddom%dhlake,           &
-                            base_state_ts0,mddom%htu,mddom%htv)
+                            base_state_ts0,mddom%htu,mddom%htv,            &
+                            mddom%rlat,mddom%rlon)
     end if
     if ( moloch_do_test_1 ) then
       ifrayd = 0
@@ -2245,11 +2233,22 @@ module mod_params
     !
     ! Calculate boundary areas per processor
     !
-    call setup_boundaries(cross,cross,ba_cr)
     if ( idynamic == 3 ) then
-      call setup_boundaries(dot,cross,ba_ut)
-      call setup_boundaries(cross,dot,ba_vt)
+      nspgx = max(5, nint(20.0_rkx * (ds**(-0.35_rkx))))
+      nspgd = nspgx
+      if ( myid == italk ) then
+        write(stdout,'(a,f7.3,a)') ' Resolution of ',ds,' km.'
+        write(stdout,'(a,i3,a)') ' Using nspgx = ',nspgx,' in MOLOCH code'
+      end if
     else
+      if ( iboudy == 4 ) then
+        nspgd = max(6,nspgd)
+        nspgx = max(6,nspgx)
+      end if
+    end if
+
+    call setup_boundaries(cross,cross,ba_cr)
+    if ( idynamic /= 3 ) then
       call setup_boundaries(dot,dot,ba_dt)
     end if
 
@@ -2257,13 +2256,15 @@ module mod_params
     call allocate_v2dbound(xtsb,cross)
     call allocate_v3dbound(xtb,kz,cross)
     call allocate_v3dbound(xqb,kz,cross)
-    call allocate_v3dbound(xub,kz,dot)
-    call allocate_v3dbound(xvb,kz,dot)
+    call allocate_v3dbound(dub,kz,dot)
+    call allocate_v3dbound(dvb,kz,dot)
     if ( idynamic == 2 ) then
       call allocate_v3dbound(xppb,kz,cross)
       call allocate_v3dbound(xwwb,kzp1,cross)
     else if ( idynamic == 3 ) then
       call allocate_v3dbound(xpaib,kz,cross)
+      call allocate_v3dbound(xub,kz,cross)
+      call allocate_v3dbound(xvb,kz,cross)
     end if
 
     if ( myid == italk ) then
@@ -2337,10 +2338,12 @@ module mod_params
       end if
 
       write(stdout,*) 'Physical Parameterizations'
-      write(stdout,'(a,i2)') '  Lateral Boundary conditions : ', iboudy
-      write(stdout,'(a,i2)') '  Semi-Lagrangian Advection   : ', isladvec
-      if ( isladvec == 1 ) then
-        write(stdout,'(a,i2)') '  QMSL algorithm used         : ', iqmsl
+      if ( idynamic /= 3 ) then
+        write(stdout,'(a,i2)') '  Lateral Boundary conditions : ', iboudy
+        write(stdout,'(a,i2)') '  Semi-Lagrangian Advection   : ', isladvec
+        if ( isladvec == 1 ) then
+          write(stdout,'(a,i2)') '  QMSL algorithm used         : ', iqmsl
+        end if
       end if
       if ( any(icup == -1) ) then
         icup(:) = -1
@@ -2375,11 +2378,13 @@ module mod_params
       write(stdout,*) 'Boundary Pameterizations'
       write(stdout,'(a,i3)') '  Num. of bndy points cross  : ', nspgx
       write(stdout,'(a,i3)') '  Num. of bndy points dot    : ', nspgd
-      write(stdout,'(a,f9.6)') '  Nudge value high range     : ', high_nudge
-      write(stdout,'(a,f9.6)') '  Nudge value medium range   : ', medium_nudge
-      write(stdout,'(a,f9.6)') '  Nudge value low range      : ', low_nudge
-      write(stdout,'(a,f9.6)') '  Nm paramter                : ', bdy_nm
-      write(stdout,'(a,f9.6)') '  Dm paramter                : ', bdy_dm
+      if ( idynamic /= 3 ) then
+        write(stdout,'(a,f9.6)') '  Nudge value high range     : ', high_nudge
+        write(stdout,'(a,f9.6)') '  Nudge value medium range   : ', medium_nudge
+        write(stdout,'(a,f9.6)') '  Nudge value low range      : ', low_nudge
+        write(stdout,'(a,f9.6)') '  Nm paramter                : ', bdy_nm
+        write(stdout,'(a,f9.6)') '  Dm paramter                : ', bdy_dm
+      end if
 #endif
 #ifdef CLM
       write(stdout,*) 'CLM Pameterizations'
@@ -2533,11 +2538,6 @@ module mod_params
       call allocate_mod_slabocean
       call init_slabocean(sfs,mddom%lndcat,fsw,flw,mddom%xlon,mddom%xlat)
     end if
-    !
-    ! Setup Boundary condition routines.
-    !
-    call setup_bdycon
-    if ( ichem == 1 ) call setup_che_bdycon
 
     if ( idynamic == 2 ) then
       call make_reference_atmosphere
@@ -2545,10 +2545,17 @@ module mod_params
     else if ( idynamic == 3 ) then
       call compute_moloch_static
     end if
+    !
+    ! Setup Boundary condition routines.
+    !
+    call setup_bdycon
+    if ( ichem == 1 ) call setup_che_bdycon
 
-    if ( iboudy < 0 .or. iboudy > 7 ) then
-      call fatal(__FILE__,__LINE__, &
-                 'UNSUPPORTED BDY SCHEME.')
+    if ( idynamic /= 3 ) then
+      if ( iboudy < 0 .or. iboudy > 6 ) then
+        call fatal(__FILE__,__LINE__, &
+                   'UNSUPPORTED BDY SCHEME.')
+      end if
     end if
 
     if ( myid == italk ) then
@@ -2973,25 +2980,23 @@ module mod_params
       write(stdout,'(a,f5.0,a)') &
         ' The radiation is computed every ',dtrad/60.0_rkx,' minutes.'
 
-      if ( iboudy == 0 ) then
-        write(stdout,*) 'The lateral boundary conditions are fixed.'
-      else if ( iboudy == 1 ) then
-        write(stdout,*) 'Relaxation boundary conditions (linear method)'
-      else if ( iboudy == 2 ) then
-        write(stdout,*) 'Time dependent boundary conditions are used.'
-      else if ( iboudy == 3 ) then
-        write(stdout,*) 'Inflow/outflow boundary conditions are used.'
-      else if ( iboudy == 4 ) then
-        write(stdout,*) 'Sponge boundary conditions are used.'
-      else if ( iboudy == 5 ) then
-        write(stdout,*) 'Relaxation boundary conditions (exponential method)'
-      else if ( iboudy == 6 ) then
-        write(stdout,*) 'Relaxation boundary conditions (sinusoidal method)'
-      else if ( iboudy == 7 ) then
-        write(stdout,*) 'Relaxation boundary conditions (Lehmann optimal)'
-      end if
-
       if ( idynamic /= 3 ) then
+        if ( iboudy == 0 ) then
+          write(stdout,*) 'The lateral boundary conditions are fixed.'
+        else if ( iboudy == 1 ) then
+          write(stdout,*) 'Relaxation boundary conditions (linear method)'
+        else if ( iboudy == 2 ) then
+          write(stdout,*) 'Time dependent boundary conditions are used.'
+        else if ( iboudy == 3 ) then
+          write(stdout,*) 'Inflow/outflow boundary conditions are used.'
+        else if ( iboudy == 4 ) then
+          write(stdout,*) 'Sponge boundary conditions are used.'
+        else if ( iboudy == 5 ) then
+          write(stdout,*) 'Relaxation boundary conditions (exponential method)'
+        else if ( iboudy == 6 ) then
+          write(stdout,*) 'Relaxation boundary conditions (sinusoidal method)'
+        end if
+
         write(stdout,'(a,7x,a,11x,a,6x,a,7x,a,7x,a,9x,a)') '# k','sigma','a',&
           'dsigma','twt(1)','twt(2)','qcon'
 
