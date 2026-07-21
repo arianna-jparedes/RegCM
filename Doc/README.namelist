@@ -697,6 +697,14 @@
  kf_min_dtcape = 1800.0, ! Consumption time of CAPE low limit
  kf_max_dtcape = 3600.0, ! Consumption time of CAPE high limit
  kf_wthreshold = 0.02,   ! Vertical wind threshold in m/s
+ istochastic = 0,        ! 0 = deterministic (rad ramp)
+                         ! 1 = draw rad from lognormal (needs &kfstochastic)
+ /
+ &kfstochastic
+ rad_sigma = 0.0,        ! spread of the lognormal in log-space
+ rad_min = 1000.0,       ! lower truncation of rad in m
+ rad_max = 3000.0,       ! upper truncation of rad in m
+ rad _med = 1500.0       ! median of the lognormal in m
  /
 !
 ! Holtslag PBL scheme control
