@@ -372,6 +372,11 @@ module mod_runparams
   real(rkx) , public :: kf_tkemax
   real(rkx) , public :: kf_wthreshold
 
+  real(rkx), public :: rad_sigma ! spread of the lognormal
+  real(rkx), public :: rad_min ! lower truncation of rad
+  real(rkx), public :: rad_max ! upper truncation of rad
+  real(rkx), public :: rad_med ! median of the lognormal
+  
   ! Tweak Global data
 
   integer(ik4) , public :: itweak
