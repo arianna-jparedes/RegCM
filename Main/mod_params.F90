@@ -1740,6 +1740,7 @@ module mod_params
       call bcast(kf_min_dtcape)
       call bcast(kf_max_dtcape)
       call bcast(kf_tkemax)
+      call bcast(istochastic)
       if ( istochastic == 1 ) then
         call bcast(rad_sigma)
         call bcast(rad_min)
