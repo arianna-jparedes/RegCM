@@ -25,6 +25,7 @@ module mod_cu_kf
   use mod_constants , only : cpd , rcpd , wlhf , p00
   use mod_constants , only : d_zero , d_one , d_half , d_two
   use mod_constants , only : d_10 , d_100 , d_1000 , dlowval
+  use mod_constants , only : mathpi 
   use mod_memutil
   use mod_dynparam
   use mod_stdio
@@ -38,6 +39,7 @@ module mod_cu_kf
   use mod_runparams , only : kf_tkemax , kf_wthreshold
   use mod_runparams , only : k2_const , kfac_shal , kfac_deep
   use mod_runparams , only : ichem , clfrcv
+  use mod_runparams , only : istochastic, rad_sigma, rad_min, rad_max, rad_med
   use mod_service
 
   implicit none
