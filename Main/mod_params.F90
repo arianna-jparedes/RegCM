@@ -532,6 +532,10 @@ module mod_params
     kf_tkemax = 5.0_rkx   ! Maximum turbolent kinetic energy in sub cloud layer
     kf_min_dtcape = 1800.0_rkx ! Consumption time of CAPE low limit
     kf_max_dtcape = 3600.0_rkx ! Consumption time of CAPE high limit
+    rad_sigma = 0.0_rkx ! spread of the lognormal (Deterministic)
+    rad_min = 1000.0_rkx ! lower truncation of rad
+    rad_max = 3000.0_rkx ! upper truncation of rad
+    rad_med = 1500.0_rkx ! median of the lognormal 
     !
     ! uwparam ;
     ! Original settings from Travis O'Brian
